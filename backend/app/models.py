@@ -89,6 +89,7 @@ class Outfit(Base):
     outfit_items: Mapped[list["OutfitItem"]] = relationship(
         back_populates="outfit", passive_deletes=True
     )
+    messages: Mapped[list["Message"]] = relationship(back_populates="outfit", passive_deletes=True)
 
 
 class OutfitItem(Base):
@@ -103,3 +104,17 @@ class OutfitItem(Base):
     slot: Mapped[str] = mapped_column(String(20))
     outfit: Mapped["Outfit"] = relationship(back_populates="outfit_items")
     item: Mapped["Item"] = relationship(back_populates="outfit_items")
+
+
+class Message(Base):
+    __tablename__ = "messages"
+    __table_args__ = (CheckConstraint("role IN ('user', 'assistant')", name="role_valid"),)
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    outfit_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("outfits.id", ondelete="CASCADE"), index=True
+    )
+    role: Mapped[str] = mapped_column(String(20))
+    content: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    outfit: Mapped["Outfit"] = relationship(back_populates="messages")
