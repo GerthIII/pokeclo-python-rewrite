@@ -10,7 +10,6 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
     func,
-    text,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -39,3 +38,83 @@ class User(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
+    items: Mapped[list["Item"]] = relationship(back_populates="user", passive_deletes=True)
+    outfits: Mapped[list["Outfit"]] = relationship(back_populates="user", passive_deletes=True)
+
+
+class Item(Base):
+    __tablename__ = "items"
+    __table_args__ = (
+        CheckConstraint(
+            "category IN ('sports', 'casual', 'formal', 'outdoor')", name="category_valid"
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    user_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    name: Mapped[str] = mapped_column(String(100))
+    description: Mapped[str] = mapped_column(Text)
+    category: Mapped[str] = mapped_column(String(20))
+    slot: Mapped[str] = mapped_column(String(20))
+    status: Mapped[str] = mapped_column(String(20), server_default="wanted")
+    photo_public_id: Mapped[str | None] = mapped_column(String(255))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+    user: Mapped["User"] = relationship(back_populates="items")
+    outfit_items: Mapped[list["OutfitItem"]] = relationship(
+        back_populates="item", passive_deletes=True
+    )
+
+
+class Outfit(Base):
+    __tablename__ = "outfits"
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    user_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    name: Mapped[str] = mapped_column(String(120))
+    description: Mapped[str | None] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(20), server_default="draft")
+    photo_public_id: Mapped[str | None] = mapped_column(String(255))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+    user: Mapped["User"] = relationship(back_populates="outfits")
+    outfit_items: Mapped[list["OutfitItem"]] = relationship(
+        back_populates="outfit", passive_deletes=True
+    )
+    messages: Mapped[list["Message"]] = relationship(back_populates="outfit", passive_deletes=True)
+
+
+class OutfitItem(Base):
+    __tablename__ = "outfit_items"
+    __table_args__ = (UniqueConstraint("outfit_id", "slot"),)
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    outfit_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("outfits.id", ondelete="CASCADE"))
+    item_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("items.id", ondelete="CASCADE"), index=True
+    )
+    slot: Mapped[str] = mapped_column(String(20))
+    outfit: Mapped["Outfit"] = relationship(back_populates="outfit_items")
+    item: Mapped["Item"] = relationship(back_populates="outfit_items")
+
+
+class Message(Base):
+    __tablename__ = "messages"
+    __table_args__ = (CheckConstraint("role IN ('user', 'assistant')", name="role_valid"),)
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    outfit_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("outfits.id", ondelete="CASCADE"), index=True
+    )
+    role: Mapped[str] = mapped_column(String(20))
+    content: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    outfit: Mapped["Outfit"] = relationship(back_populates="messages")
