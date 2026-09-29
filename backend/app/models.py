@@ -10,7 +10,6 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
     func,
-    text,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -66,6 +65,9 @@ class Item(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
     user: Mapped["User"] = relationship(back_populates="items")
+    outfit_items: Mapped[list["OutfitItem"]] = relationship(
+        back_populates="item", passive_deletes=True
+    )
 
 
 class Outfit(Base):
@@ -84,3 +86,20 @@ class Outfit(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
     user: Mapped["User"] = relationship(back_populates="outfits")
+    outfit_items: Mapped[list["OutfitItem"]] = relationship(
+        back_populates="outfit", passive_deletes=True
+    )
+
+
+class OutfitItem(Base):
+    __tablename__ = "outfit_items"
+    __table_args__ = (UniqueConstraint("outfit_id", "slot"),)
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    outfit_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("outfits.id", ondelete="CASCADE"))
+    item_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("items.id", ondelete="CASCADE"), index=True
+    )
+    slot: Mapped[str] = mapped_column(String(20))
+    outfit: Mapped["Outfit"] = relationship(back_populates="outfit_items")
+    item: Mapped["Item"] = relationship(back_populates="outfit_items")
