@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, Field, PlainSerializer, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from enum import StrEnum
 
@@ -30,5 +30,17 @@ def _clean(value: str | None) -> str | None:
     if not collapsed:
         raise ValueError("Cannot be blank")
     return collapsed
+
+
+class ItemCreate(BaseModel):
+    name: Annotated[str, Field(min_length=1, max_length=100)]
+    description: Annotated[str, Field(min_length=1)]
+    category: Category
+    slot: Slot
+    status: ItemStatus = ItemStatus.wanted
+    _normalise = field_validator("name")(_clean)
+
+
+
 
 
