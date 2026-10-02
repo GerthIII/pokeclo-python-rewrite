@@ -1,8 +1,8 @@
+from enum import StrEnum
 from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from enum import StrEnum
 
 class Category(StrEnum):
     sports = "sports"
@@ -41,6 +41,23 @@ class ItemCreate(BaseModel):
     _normalise = field_validator("name")(_clean)
 
 
+class ItemUpdate(BaseModel):
+    name: Annotated[str, Field(min_length=1, max_length=100)] | None = None
+    description: Annotated[str, Field(min_length=1)] | None = None
+    category: Category | None = None
+    slot: Slot | None = None
+    status: ItemStatus | None = None
+    _normalize = field_validator("name")(_clean)
 
 
+class ItemRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
 
+    id: int
+    # No user_id because we'll only ever be looking at the logged in user's items
+    name: str
+    description: str
+    category: Category
+    slot: Slot
+    status: ItemStatus
+    photo_public_id: str | None

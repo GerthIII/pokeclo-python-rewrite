@@ -4,7 +4,6 @@ from sqlalchemy import engine_from_config, pool
 
 from alembic import context
 from app.config import settings
-
 from app.models import Base
 
 # this is the Alembic Config object, which provides
@@ -69,7 +68,7 @@ def run_migrations_online() -> None:
 
     with connectable.connect() as connection:
         context.configure(
-            connection=connection, 
+            connection=connection,
             target_metadata=target_metadata,
             compare_type=True,
         )
