@@ -68,13 +68,27 @@ class OutfitStatus(StrEnum):
     created = "created"
 
 
+class OutfitItemIn(BaseModel):
+    slot: Slot
+    item_id: int
+
+
+class OutfitItemRead(BaseModel):
+    slot: Slot
+    item_id: int
+    name: str
+    photo_public_id: str | None
+
+
 class OutfitCreate(BaseModel):
+    items: list[OutfitItemIn] = []
     name: Annotated[str, Field(min_length=1, max_length=120)] = "Add a name to your outfit"
     description: str | None = None
     _normalise = field_validator("name")(_clean)
 
 
 class OutfitUpdate(BaseModel):
+    items: list[OutfitItemIn] | None = None
     name: Annotated[str, Field(min_length=1, max_length=120)] | None = None
     description: Annotated[str, Field(min_length=1)] | None = None
     status: OutfitStatus | None = None
@@ -84,8 +98,12 @@ class OutfitUpdate(BaseModel):
 class OutfitRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
+    items: list[OutfitItemRead]
     id: int
     name: str
     description: str | None
     status: OutfitStatus
     photo_public_id: str | None
+
+
+
