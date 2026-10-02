@@ -61,3 +61,31 @@ class ItemRead(BaseModel):
     slot: Slot
     status: ItemStatus
     photo_public_id: str | None
+
+
+class OutfitStatus(StrEnum):
+    draft = "draft"
+    created = "created"
+
+
+class OutfitCreate(BaseModel):
+    name: Annotated[str, Field(min_length=1, max_length=120)] = "Add a name to your outfit"
+    description: str | None = None
+    _normalise = field_validator("name")(_clean)
+
+
+class OutfitUpdate(BaseModel):
+    name: Annotated[str, Field(min_length=1, max_length=120)] | None = None
+    description: Annotated[str, Field(min_length=1)] | None = None
+    status: OutfitStatus | None = None
+    _normalize = field_validator("name")(_clean)
+
+
+class OutfitRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name: str
+    description: str | None
+    status: OutfitStatus
+    photo_public_id: str | None
