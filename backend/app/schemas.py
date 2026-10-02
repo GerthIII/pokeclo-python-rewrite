@@ -73,6 +73,15 @@ class OutfitItemIn(BaseModel):
     item_id: int
 
 
+def _one_per_slot(items: list[OutfitItemIn | None]) -> list[OutfitItemIn] | None:
+    if items is None:
+        return None
+    slots = [item.slot for item in items]
+    if len(slots) != len(set(slots)):
+        raise ValueError("Only one item per slot")
+    return items
+
+
 class OutfitItemRead(BaseModel):
     slot: Slot
     item_id: int
