@@ -73,7 +73,14 @@ class OutfitItemIn(BaseModel):
     item_id: int
 
 
-def _one_per_slot(items: list[OutfitItemIn | None]) -> list[OutfitItemIn] | None:
+class OutfitItemRead(BaseModel):
+    slot: Slot
+    item_id: int
+    name: str
+    photo_public_id: str | None
+
+
+def _one_per_slot(items: list[OutfitItemIn] | None) -> list[OutfitItemIn] | None:
     if items is None:
         return None
     slots = [item.slot for item in items]
@@ -82,18 +89,12 @@ def _one_per_slot(items: list[OutfitItemIn | None]) -> list[OutfitItemIn] | None
     return items
 
 
-class OutfitItemRead(BaseModel):
-    slot: Slot
-    item_id: int
-    name: str
-    photo_public_id: str | None
-
-
 class OutfitCreate(BaseModel):
     items: list[OutfitItemIn] = []
     name: Annotated[str, Field(min_length=1, max_length=120)] = "Add a name to your outfit"
     description: str | None = None
     _normalise = field_validator("name")(_clean)
+    _check_slots = field_validator("items")(_one_per_slot)
 
 
 class OutfitUpdate(BaseModel):
@@ -102,6 +103,7 @@ class OutfitUpdate(BaseModel):
     description: Annotated[str, Field(min_length=1)] | None = None
     status: OutfitStatus | None = None
     _normalize = field_validator("name")(_clean)
+    _check_slots = field_validator("items")(_one_per_slot)
 
 
 class OutfitRead(BaseModel):
