@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Response, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -39,3 +39,12 @@ def update_item(item_id: int, payload: ItemUpdate, session: SessionDep, user_id:
         setattr(item, field, value)
     session.commit()
     return item
+
+
+@router.delete("/{item_id}", status_code=204)
+def delete_item(item_id: int, user_id: CurrentUserId, session: SessionDep):
+    item = _get_or_404(session, user_id, item_id)
+    session.delete(item)
+    session.commit()
+
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
