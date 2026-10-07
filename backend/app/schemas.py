@@ -115,6 +115,3 @@ class OutfitRead(BaseModel):
     description: str | None
     status: OutfitStatus
     photo_public_id: str | None
-
-
-
