@@ -1,12 +1,21 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 from app.auth import CurrentUserId
 from app.database import SessionDep
 from app.models import Item
-from app.schemas import ItemCreate, ItemRead
+from app.schemas import ItemCreate, ItemRead, ItemUpdate
 
 router = APIRouter(prefix="/api/items", tags=["items"])
+
+
+def _get_or_404(session: Session, user_id: int, item_id: int) -> Item:
+    item = session.get(Item, item_id)
+
+    if item is None or user_id != item.user_id:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Item not found")
+    return item
 
 
 @router.get("", response_model=list[ItemRead])
@@ -20,4 +29,13 @@ def create_item(payload: ItemCreate, session: SessionDep, user_id: CurrentUserId
     session.add(item)
     session.commit()
 
+    return item
+
+
+@router.patch("/{item_id}", response_model=ItemRead)
+def update_item(item_id: int, payload: ItemUpdate, session: SessionDep, user_id: CurrentUserId):
+    item = _get_or_404(session, user_id, item_id)
+    for field, value in payload.model_dump(exclude_unset=True, exclude_none=True).items():
+        setattr(item, field, value)
+    session.commit()
     return item
