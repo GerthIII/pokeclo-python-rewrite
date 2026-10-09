@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.routers import items
+from app.routers import items, outfits
 
 app = FastAPI(title="Pokeclo")
 
@@ -15,6 +15,7 @@ app.add_middleware(
 )
 
 app.include_router(items.router)
+app.include_router(outfits.router)
 
 
 @app.get("/api/health")
