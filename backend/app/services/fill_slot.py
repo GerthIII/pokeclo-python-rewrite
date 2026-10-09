@@ -37,5 +37,5 @@ def fill_slot(session: Session, item_id: int, outfit_id: int, user_id: int) -> O
         delete(OutfitItem).where(OutfitItem.outfit_id == outfit_id, OutfitItem.slot == item.slot)
     )
     session.add(OutfitItem(item_id=item_id, outfit_id=outfit_id, slot=item.slot))
-    
+
     return outfit

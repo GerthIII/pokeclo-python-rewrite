@@ -1,11 +1,11 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Response, status
 from sqlalchemy import select
 
 from app.auth import CurrentUserId
 from app.database import SessionDep
 from app.models import Outfit
-from app.schemas import OutfitRead, OutfitCreate, OutfitUpdate
-from app.services.fill_slot import fill_slot, ItemNotFound
+from app.schemas import OutfitCreate, OutfitRead, OutfitUpdate
+from app.services.fill_slot import ItemNotFound, fill_slot
 
 router = APIRouter(prefix="/api/outfits", tags=["outfits"])
 
@@ -22,7 +22,7 @@ def show_outfit(session: SessionDep, user_id: CurrentUserId, outfit_id: int):
     outfit = session.get(Outfit, outfit_id)
     if outfit is None or outfit.user_id != user_id:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Outfit not found")
-    
+
     return outfit
 
 
@@ -38,19 +38,23 @@ def create_outfit(payload: OutfitCreate, session: SessionDep, user_id: CurrentUs
             fill_slot(session, item_id, outfit_id, user_id)
     except ItemNotFound as err:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Item not found") from err
-    
+
     session.commit()
     return outfit
 
 
 @router.patch("/{outfit_id}", response_model=OutfitRead)
-def update_outfit(payload: OutfitUpdate, session: SessionDep, user_id: CurrentUserId, outfit_id: int):
+def update_outfit(
+    payload: OutfitUpdate, session: SessionDep, user_id: CurrentUserId, outfit_id: int
+):
     outfit = session.get(Outfit, outfit_id)
     if outfit is None or outfit.user_id != user_id:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Outfit not found")
-    for field, value in payload.model_dump(exclude_unset=True, exclude_none=True, exclude={"items"}).items():
+    for field, value in payload.model_dump(
+        exclude_unset=True, exclude_none=True, exclude={"items"}
+    ).items():
         setattr(outfit, field, value)
-    
+
     try:
         if payload.items:
             for entry in payload.items:
@@ -58,6 +62,17 @@ def update_outfit(payload: OutfitUpdate, session: SessionDep, user_id: CurrentUs
                 fill_slot(session, item_id, outfit_id, user_id)
     except ItemNotFound as err:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Item not found") from err
-        
+
     session.commit()
     return outfit
+
+
+@router.delete("/{outfit_id}", status_code=204)
+def delete_outfit(session: SessionDep, user_id: CurrentUserId, outfit_id: int):
+    outfit = session.get(Outfit, outfit_id)
+    if outfit is None or outfit.user_id != user_id:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Outfit not found")
+    session.delete(outfit)
+    session.commit()
+
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
