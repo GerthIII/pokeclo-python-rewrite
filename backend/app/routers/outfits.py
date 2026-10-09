@@ -17,6 +17,15 @@ def list_outfits(session: SessionDep, user_id: CurrentUserId):
     ).all()
 
 
+@router.get("/{outfit_id}", response_model=OutfitRead)
+def show_outfit(session: SessionDep, user_id: CurrentUserId, outfit_id: int):
+    outfit = session.get(Outfit, outfit_id)
+    if outfit is None or outfit.user_id != user_id:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Outfit not found")
+    
+    return outfit
+
+
 @router.post("", response_model=OutfitRead, status_code=201)
 def create_outfit(payload: OutfitCreate, session: SessionDep, user_id: CurrentUserId):
     outfit = Outfit(user_id=user_id, **payload.model_dump(exclude={"items"}))
