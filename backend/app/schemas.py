@@ -1,7 +1,7 @@
 from enum import StrEnum
 from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import AliasPath, BaseModel, ConfigDict, Field, field_validator
 
 
 class Category(StrEnum):
@@ -73,10 +73,12 @@ class OutfitItemIn(BaseModel):
 
 
 class OutfitItemRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     slot: Slot
     item_id: int
-    name: str
-    photo_public_id: str | None
+    name: str = Field(validation_alias=AliasPath("item", "name"))
+    photo_public_id: str | None = Field(validation_alias=AliasPath("item", "photo_public_id"))
 
 
 class OutfitCreate(BaseModel):
@@ -97,7 +99,7 @@ class OutfitUpdate(BaseModel):
 class OutfitRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    items: list[OutfitItemRead]
+    items: list[OutfitItemRead] = Field(validation_alias="outfit_items")
     id: int
     name: str
     description: str | None

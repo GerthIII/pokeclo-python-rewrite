@@ -15,6 +15,7 @@ class OutfitNotFound(Exception):
         super().__init__(f"outfit {outfit_id} not found")
         self.outfit_id = outfit_id
 
+
 def fill_slot(session: Session, item_id: int, outfit_id: int, user_id: int) -> Outfit:
     item = session.get(Item, item_id)
     outfit = session.get(Outfit, outfit_id)
@@ -24,18 +25,17 @@ def fill_slot(session: Session, item_id: int, outfit_id: int, user_id: int) -> O
 
     if outfit is None or outfit.user_id != user_id:
         raise OutfitNotFound(outfit_id)
-    
+
     # Replaces whatever is already in the slot
     # callers passing several items for one slot get the last one
     # Situations where this might occur:
-    # The AI chat flow. PLANNING.md has Gemini "select this item". 
+    # The AI chat flow. PLANNING.md has Gemini "select this item".
     # A model could easily suggest two tops in one reply.
     # A frontend bug. For example, stale state sends both the old and the new pick.
     # Someone scripting the API directly, such as me, testing in /docs.
-    session.execute(delete(OutfitItem).where(
-        OutfitItem.outfit_id == outfit_id, 
-        OutfitItem.slot == item.slot)
-        )
+    session.execute(
+        delete(OutfitItem).where(OutfitItem.outfit_id == outfit_id, OutfitItem.slot == item.slot)
+    )
     session.add(OutfitItem(item_id=item_id, outfit_id=outfit_id, slot=item.slot))
-    session.commit()
+
     return outfit
