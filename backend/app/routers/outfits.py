@@ -4,7 +4,7 @@ from sqlalchemy import select
 from app.auth import CurrentUserId
 from app.database import SessionDep
 from app.models import Outfit
-from app.schemas import OutfitRead, OutfitCreate
+from app.schemas import OutfitRead, OutfitCreate, OutfitUpdate
 from app.services.fill_slot import fill_slot, ItemNotFound
 
 router = APIRouter(prefix="/api/outfits", tags=["outfits"])
@@ -39,5 +39,25 @@ def create_outfit(payload: OutfitCreate, session: SessionDep, user_id: CurrentUs
     except ItemNotFound as err:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Item not found") from err
     
+    session.commit()
+    return outfit
+
+
+@router.patch("/{outfit_id}", response_model=OutfitRead)
+def update_outfit(payload: OutfitUpdate, session: SessionDep, user_id: CurrentUserId, outfit_id: int):
+    outfit = session.get(Outfit, outfit_id)
+    if outfit is None or outfit.user_id != user_id:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Outfit not found")
+    for field, value in payload.model_dump(exclude_unset=True, exclude_none=True, exclude={"items"}).items():
+        setattr(outfit, field, value)
+    
+    try:
+        if payload.items:
+            for entry in payload.items:
+                item_id = entry.item_id
+                fill_slot(session, item_id, outfit_id, user_id)
+    except ItemNotFound as err:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Item not found") from err
+        
     session.commit()
     return outfit
