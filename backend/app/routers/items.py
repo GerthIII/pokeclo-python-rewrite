@@ -18,6 +18,12 @@ def _get_or_404(session: Session, user_id: int, item_id: int) -> Item:
     return item
 
 
+@router.get("/{item_id}", response_model=ItemRead)
+def show_item(session: SessionDep, user_id: CurrentUserId, item_id: int):
+    return _get_or_404(session, user_id, item_id)
+
+
+
 @router.get("", response_model=list[ItemRead])
 def list_items(session: SessionDep, user_id: CurrentUserId):
     return session.scalars(select(Item).where(Item.user_id == user_id).order_by(Item.name)).all()

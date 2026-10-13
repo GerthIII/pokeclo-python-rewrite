@@ -1,5 +1,6 @@
 import { EditOutfitPage, NewOutfitPage } from './components/OutfitForm'
 import { DashboardPage } from './components/DashboardPage'
+import { ItemDetail } from './components/ItemDetail'
 import { ItemsPage } from './components/ItemsPage'
 import { OutfitDetail } from './components/OutfitDetail'
 import { OutfitsPage } from './components/OutfitsPage'
@@ -16,7 +17,10 @@ function Page({ route }: { route: string[] }) {
     }
     return <OutfitsPage />
   }
-  if (section === 'items') return <ItemsPage startAdding={id === 'new'} />
+  if (section === 'items') {
+    if (id && id !== 'new' && Number.isInteger(Number(id))) return <ItemDetail id={Number(id)} />
+    return <ItemsPage startAdding={id === 'new'} />
+  }
   return <DashboardPage />
 }
 
@@ -38,13 +42,18 @@ export default function App() {
           className="navbar-item"
           aria-current={section === 'items' ? 'page' : undefined}
         >
-          <i className="fa-solid fa-shirt navbar-icon" aria-hidden="true" />
+          <span className="navbar-glyph">
+            <i className="fa-solid fa-shirt navbar-icon" aria-hidden="true" />
+          </span>
           <span>Closet</span>
         </a>
 
-        <label className="navbar-item navbar-camera" aria-label="Take a photo of a new item">
-          <span className="navbar-camera-pill">
-            <i className="fa-solid fa-camera navbar-icon" aria-hidden="true" />
+        <label className="navbar-item navbar-camera" aria-label="Add an item with your camera">
+          <span className="navbar-glyph navbar-plus">
+            <svg viewBox="0 0 24 24" width="40" height="40" aria-hidden="true">
+              <circle cx="12" cy="12" r="12" fill="currentColor" />
+              <path d="M12 7v10M7 12h10" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
+            </svg>
           </span>
           <input
             type="file"
@@ -66,7 +75,9 @@ export default function App() {
           className="navbar-item"
           aria-current={section === 'outfits' ? 'page' : undefined}
         >
-          <i className="fa-solid fa-star navbar-icon" aria-hidden="true" />
+          <span className="navbar-glyph">
+            <i className="fa-solid fa-star navbar-icon" aria-hidden="true" />
+          </span>
           <span>Outfits</span>
         </a>
       </nav>

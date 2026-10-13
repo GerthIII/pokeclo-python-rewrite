@@ -11,6 +11,7 @@ import type {
 
 export const keys = {
   items: ['items'] as const,
+  item: (id: number) => ['items', id] as const,
   outfits: ['outfits'] as const,
   outfit: (id: number) => ['outfits', id] as const,
 }
@@ -19,6 +20,9 @@ export const keys = {
 
 export const useItems = () =>
   useQuery({ queryKey: keys.items, queryFn: () => api<Item[]>('/items') })
+
+export const useItem = (id: number) =>
+  useQuery({ queryKey: keys.item(id), queryFn: () => api<Item>(`/items/${id}`) })
 
 export function useCreateItem() {
   const qc = useQueryClient()
