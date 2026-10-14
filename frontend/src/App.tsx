@@ -4,7 +4,7 @@ import { ItemDetail } from './components/ItemDetail'
 import { ItemsPage } from './components/ItemsPage'
 import { OutfitDetail } from './components/OutfitDetail'
 import { OutfitsPage } from './components/OutfitsPage'
-import { setPendingPhoto } from './pendingPhoto'
+import { startPhotoUpload } from './pendingPhoto'
 import { go, useRoute } from './router'
 
 function Page({ route }: { route: string[] }) {
@@ -63,7 +63,7 @@ export default function App() {
             onChange={(e) => {
               const file = e.target.files?.[0]
               if (!file) return
-              setPendingPhoto(file)
+              startPhotoUpload(file)
               e.target.value = ''
               go('items/new')
             }}

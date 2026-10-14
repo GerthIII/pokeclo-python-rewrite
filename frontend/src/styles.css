@@ -289,3 +289,13 @@ button.link:hover:not(:disabled) { transform: none; background: none; text-decor
 }
 .fab:hover:not(:disabled) { background: var(--pc-accent-strong); transform: translateY(-2px); }
 .fab:active { transform: scale(0.94); }
+
+/* ---- stored photos ---- */
+.product-image { overflow: hidden; }
+.product-image img, .detail-photo img, .cell img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.detail-photo { overflow: hidden; }
+.photo-preview .notice.error { text-align: center; }
+
+/* item page: show the whole photo instead of cropping it */
+.detail-photo:has(img) { aspect-ratio: auto; background: var(--pc-surface); }
+.detail-photo img { height: auto; max-height: 65vh; object-fit: contain; margin: 0 auto; }

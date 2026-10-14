@@ -1,5 +1,6 @@
-import { useMemo, useState, type FormEvent } from 'react'
-import { takePendingPhoto, setPendingPhoto } from '../pendingPhoto'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { photoUrl } from '../cloudinary'
+import { clearPendingPhoto, getPendingPhoto, startPhotoUpload } from '../pendingPhoto'
 import { useCreateItem, useUpdateItem } from '../queries'
 import {
   CATEGORIES,
@@ -11,6 +12,12 @@ import {
   type Slot,
 } from '../types'
 import { ErrorNotice } from './Notice'
+
+type PhotoState =
+  | { status: 'none' }
+  | { status: 'uploading' }
+  | { status: 'done'; publicId: string }
+  | { status: 'error'; message: string }
 
 // Create mode when `item` is omitted, edit mode otherwise.
 export function ItemForm({ item, onDone }: { item?: Item; onDone: () => void }) {
@@ -24,18 +31,46 @@ export function ItemForm({ item, onDone }: { item?: Item; onDone: () => void }) 
   const [slot, setSlot] = useState<Slot>(item?.slot ?? 'top')
   const [status, setStatus] = useState<ItemStatus>(item?.status ?? 'owned')
 
-  // Photo from the navbar camera button (new items only). Preview-only for now.
-  const photoUrl = useMemo(() => {
-    const file = item ? null : takePendingPhoto()
-    return file ? URL.createObjectURL(file) : null
-  }, [item])
+  // Photo from the navbar plus button (new items only); it is already uploading.
+  const [pending, setPending] = useState(() => (item ? null : getPendingPhoto()))
+  const [photo, setPhoto] = useState<PhotoState>({ status: pending ? 'uploading' : 'none' })
+
+  useEffect(() => {
+    if (!pending) return
+    let live = true
+    pending.upload.then(
+      (publicId) => live && setPhoto({ status: 'done', publicId }),
+      (err: Error) => live && setPhoto({ status: 'error', message: err.message }),
+    )
+    return () => {
+      live = false
+    }
+  }, [pending])
+
+  const previewUrl = useMemo(
+    () => (pending ? URL.createObjectURL(pending.file) : photoUrl(item?.photo_public_id)),
+    [pending, item],
+  )
+
+  function retryUpload() {
+    if (!pending) return
+    setPhoto({ status: 'uploading' })
+    setPending(startPhotoUpload(pending.file))
+  }
 
   function submit(e: FormEvent) {
     e.preventDefault()
-    const body = { name, description, category, slot, status }
+    const body = {
+      name,
+      description,
+      category,
+      slot,
+      status,
+      ...(photo.status === 'done' ? { photo_public_id: photo.publicId } : {}),
+    }
     const opts = {
       onSuccess: () => {
-        setPendingPhoto(null)
+        clearPendingPhoto()
         onDone()
       },
     }
@@ -45,10 +80,19 @@ export function ItemForm({ item, onDone }: { item?: Item; onDone: () => void }) 
 
   return (
     <form className="card form" onSubmit={submit}>
-      {photoUrl && (
+      {previewUrl && (
         <div className="photo-preview">
-          <img src={photoUrl} alt="Your new item" />
-          <p className="muted">Photo preview only — saving photos isn't built yet.</p>
+          <img src={previewUrl} alt={item ? item.name : 'Your new item'} />
+          {photo.status === 'uploading' && <p className="muted">Uploading photo…</p>}
+          {photo.status === 'done' && <p className="muted">Photo uploaded</p>}
+          {photo.status === 'error' && (
+            <p className="notice error" role="alert">
+              Couldn't upload the photo ({photo.message}). You can save without it.{' '}
+              <button type="button" className="link" onClick={retryUpload}>
+                Try again
+              </button>
+            </p>
+          )}
         </div>
       )}
       <label>
@@ -87,7 +131,12 @@ export function ItemForm({ item, onDone }: { item?: Item; onDone: () => void }) 
       </div>
       {mutation.error && <ErrorNotice error={mutation.error} />}
       <div className="row actions">
-        <button type="submit" className="primary" disabled={mutation.isPending}>
+        <button
+          type="submit"
+          className="primary"
+          disabled={mutation.isPending || photo.status === 'uploading'}
+          title={photo.status === 'uploading' ? 'Waiting for the photo to finish uploading' : undefined}
+        >
           {mutation.isPending ? 'Saving…' : item ? 'Save changes' : 'Add item'}
         </button>
         <button type="button" onClick={onDone}>

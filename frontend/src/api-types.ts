@@ -41,6 +41,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/items/analyze": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Analyze Item */
+        post: operations["analyze_item_api_items_analyze_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/outfits": {
         parameters: {
             query?: never;
@@ -99,6 +116,11 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** Body_analyze_item_api_items_analyze_post */
+        Body_analyze_item_api_items_analyze_post: {
+            /** Photo */
+            photo: string;
+        };
         /**
          * Category
          * @enum {string}
@@ -119,6 +141,8 @@ export interface components {
             slot: components["schemas"]["Slot"];
             /** @default wanted */
             status: components["schemas"]["ItemStatus"];
+            /** Photo Public Id */
+            photo_public_id?: string | null;
         };
         /** ItemRead */
         ItemRead: {
@@ -370,6 +394,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ItemRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    analyze_item_api_items_analyze_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_analyze_item_api_items_analyze_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */

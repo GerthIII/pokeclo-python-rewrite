@@ -1,8 +1,19 @@
-// Photo picked from the navbar camera button, waiting for the new-item form.
-// Held in memory only: there is no upload endpoint yet, so it is preview-only.
-let pending: File | null = null
+import { uploadPhoto } from './api'
 
-export const setPendingPhoto = (file: File | null) => {
-  pending = file
+// Photo picked with the navbar plus button. The upload starts immediately and the
+// new-item form picks it up. Held in memory only, so a reload drops it.
+export type PendingPhoto = { file: File; upload: Promise<string> }
+
+let pending: PendingPhoto | null = null
+
+export function startPhotoUpload(file: File): PendingPhoto {
+  const upload = uploadPhoto(file)
+  upload.catch(() => {}) // the form reports the error; avoid an unhandled rejection
+  pending = { file, upload }
+  return pending
 }
-export const takePendingPhoto = () => pending
+
+export const getPendingPhoto = () => pending
+export const clearPendingPhoto = () => {
+  pending = null
+}
