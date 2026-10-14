@@ -23,7 +23,8 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
   const res = await fetch(`/api${path}`, {
     ...init,
     headers: {
-      ...(init.body ? { 'Content-Type': 'application/json' } : {}),
+      // FormData sets its own multipart boundary header; only JSON strings need ours.
+      ...(typeof init.body === 'string' ? { 'Content-Type': 'application/json' } : {}),
       ...init.headers,
     },
   })
@@ -44,3 +45,14 @@ export const patch = <T>(path: string, body: unknown) =>
   api<T>(path, { method: 'PATCH', body: JSON.stringify(body) })
 
 export const del = (path: string) => api<void>(path, { method: 'DELETE' })
+
+// Uploads a photo to Cloudinary through the backend; resolves to its public id.
+export async function uploadPhoto(file: File): Promise<string> {
+  const form = new FormData()
+  form.append('photo', file)
+  const res = await api<{ photo_public_id: string }>('/items/analyze', {
+    method: 'POST',
+    body: form,
+  })
+  return res.photo_public_id
+}
