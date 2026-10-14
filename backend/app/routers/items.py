@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Response, status
+from fastapi import APIRouter, HTTPException, Response, UploadFile, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -6,6 +6,7 @@ from app.auth import CurrentUserId
 from app.database import SessionDep
 from app.models import Item
 from app.schemas import ItemCreate, ItemRead, ItemUpdate
+from app.services.cloudinary_storage import PhotoUploadError, upload_photo
 
 router = APIRouter(prefix="/api/items", tags=["items"])
 
@@ -23,7 +24,6 @@ def show_item(session: SessionDep, user_id: CurrentUserId, item_id: int):
     return _get_or_404(session, user_id, item_id)
 
 
-
 @router.get("", response_model=list[ItemRead])
 def list_items(session: SessionDep, user_id: CurrentUserId):
     return session.scalars(select(Item).where(Item.user_id == user_id).order_by(Item.name)).all()
@@ -36,6 +36,15 @@ def create_item(payload: ItemCreate, session: SessionDep, user_id: CurrentUserId
     session.commit()
 
     return item
+
+
+@router.post("/analyze")
+def analyze_item(photo: UploadFile, user_id: CurrentUserId):
+    try:
+        public_id = upload_photo(photo.file)
+    except PhotoUploadError as err:
+        raise HTTPException(status.HTTP_502_BAD_GATEWAY, str(err)) from err
+    return {"photo_public_id": public_id}
 
 
 @router.patch("/{item_id}", response_model=ItemRead)

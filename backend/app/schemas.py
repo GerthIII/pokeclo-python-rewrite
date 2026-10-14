@@ -38,6 +38,7 @@ class ItemCreate(BaseModel):
     category: Category
     slot: Slot
     status: ItemStatus = ItemStatus.wanted
+    photo_public_id: str | None = None
     _normalise = field_validator("name")(_clean)
 
 
