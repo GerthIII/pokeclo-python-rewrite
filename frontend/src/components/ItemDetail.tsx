@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { ApiError } from '../api'
+import { photoUrl } from '../cloudinary'
 import { useDeleteItem, useItem } from '../queries'
 import { go } from '../router'
 import { ItemForm } from './ItemForm'
@@ -34,7 +35,11 @@ export function ItemDetail({ id }: { id: number }) {
       ) : (
         <article className="card item-detail">
           <div className="detail-photo">
-            <span className="slot-chip">{item.slot}</span>
+            {photoUrl(item.photo_public_id, 960) ? (
+              <img src={photoUrl(item.photo_public_id, 960)!} alt={item.name} />
+            ) : (
+              <span className="slot-chip">{item.slot}</span>
+            )}
           </div>
           <p>{item.description}</p>
           <dl className="facts">

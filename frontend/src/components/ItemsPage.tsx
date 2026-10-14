@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { photoUrl } from '../cloudinary'
 import { useItems } from '../queries'
 import { go } from '../router'
 import type { Item } from '../types'
@@ -12,7 +13,11 @@ function ItemCard({ item }: { item: Item }) {
     <li>
       <a className="product-card product-link" href={`#/items/${item.id}`}>
         <div className="product-image">
-          <span className="slot-chip">{item.slot}</span>
+          {photoUrl(item.photo_public_id) ? (
+            <img src={photoUrl(item.photo_public_id)!} alt={item.name} loading="lazy" />
+          ) : (
+            <span className="slot-chip">{item.slot}</span>
+          )}
         </div>
         <h3 className="product-title">{item.name}</h3>
         <p className="product-subtitle">{item.description}</p>
